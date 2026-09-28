@@ -1,3 +1,6 @@
 .data
+.env
+.env*
+.vercel
 dev-server.mjs
 README.md
