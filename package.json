@@ -1,0 +1,17 @@
+{
+  "name": "hitoriontap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ôn Toán 7 tập một cho người mất gốc, học bổ túc",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.mjs"
+  },
+  "author": "Nguyễn Phú Quốc",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.0"
+  }
+}
