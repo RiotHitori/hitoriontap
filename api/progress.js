@@ -1,6 +1,5 @@
 import { json, readBody, readToken } from "./_lib/auth.js";
 import { emptyProgress, readProgress, writeProgress } from "./_lib/store.js";
-import { aiEnabled } from "./_lib/ai.js";
 
 const ID = /^[a-z0-9-]{1,24}$/;
 const STATES = new Set(["ok", "shown"]);
@@ -10,7 +9,7 @@ export async function GET(request) {
   if (!user) return json({ error: "Phiên đăng nhập đã hết hạn." }, 401);
   try {
     const progress = (await readProgress(user.key)) || emptyProgress(user.name, user.key);
-    return json({ name: progress.name || user.name, progress, ai: aiEnabled() });
+    return json({ name: progress.name || user.name, progress });
   } catch (e) {
     console.error("read progress failed", e);
     return json({ error: "Không đọc được tiến độ." }, 500);

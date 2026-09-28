@@ -319,21 +319,6 @@ dialog.guide:not([open]) { display: none; }
 .guide-foot { position: sticky; bottom: 0; margin: 16px -20px 0; padding: 12px 20px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(to bottom, color-mix(in srgb, var(--paper) 0%, transparent), var(--paper) 30%); }
 .guide-foot .btn { width: 100%; }
 
-/* ---------- trợ lý AI ---------- */
-.ai-box { margin-top: 10px; border: 1.5px solid color-mix(in srgb, var(--brand) 45%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--brand) 4%, #fff); padding: 10px 12px; }
-.ai-head { font-size: .85rem; color: var(--ink-2); margin-bottom: 6px; }
-.ai-log { display: grid; gap: 8px; }
-.ai-log:empty { display: none; }
-.ai-msg { padding: 8px 11px; border-radius: 10px; font-size: .94rem; line-height: 1.55; max-width: 100%; overflow-wrap: anywhere; }
-.ai-msg.me { justify-self: end; background: var(--ink); color: var(--paper); max-width: 85%; }
-.ai-msg.bot { background: #fff; border: 1px solid var(--line); }
-.ai-msg.wait { color: var(--muted); font-style: italic; }
-.ai-msg.err { color: var(--bad); background: var(--bad-bg); border-color: #efc9c3; }
-.ai-ask { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; }
-.ai-ask textarea { flex: 1; min-width: 0; resize: vertical; font: 500 .95rem var(--font); padding: 9px 10px; border: 1.5px solid var(--line-2); border-radius: 10px; background: #fff; color: var(--ink); min-height: 44px; }
-.ai-ask textarea:focus { outline: none; border-color: var(--ink); }
-.ai-note { font-size: .75rem; color: var(--muted); margin: 6px 0 0; }
-
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-size: .92rem; font-weight: 500; z-index: 50; animation: rise .2s ease; max-width: 90vw; }
 
 @media (max-width: 560px) {

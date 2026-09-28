@@ -3,7 +3,7 @@
   const app = document.getElementById("app");
   const SESSION_KEY = "ontoan7:session";
   const LETTERS = "ABCDEFGH";
-  const session = { token: null, name: "", ai: { enabled: false, model: "Goslynk N7" }, progress: null, ready: false };
+  const session = { token: null, name: "", progress: null, ready: false };
 
   async function api(path, { method = "GET", body, keepalive } = {}) {
     const headers = { "content-type": "application/json" };
@@ -229,10 +229,8 @@
       <div class="ex-actions">
         ${e.hint ? '<button type="button" class="btn ghost small" data-act="hint">Gợi ý</button>' : ""}
         <button type="button" class="btn small" data-act="solve">Giải giúp tôi</button>
-        ${session.ai.enabled ? '<button type="button" class="btn ghost small ai-btn" data-act="ai">Hỏi AI</button>' : ""}
       </div>
       <div class="hint-slot"></div>
-      <div class="ai-slot"></div>
       <div class="sol-slot"></div>
     </article>`;
   }
@@ -349,8 +347,6 @@
         slot.innerHTML = slot.innerHTML ? "" : `<div class="hint">${e.hint}</div>`;
         typeset(slot);
       }
-      if (act.dataset.act === "ai") toggleAi(card, e);
-      if (act.dataset.act === "ai-send") askAi(card, e);
       if (act.dataset.act === "solve") {
         fillAnswer(card, e);
         const fb = card.querySelector(".feedback");
@@ -369,12 +365,6 @@
       if (ev.target.matches("input[data-f]")) ev.target.closest(".ex")._lastInput = ev.target;
     });
     root.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter" && !ev.shiftKey && ev.target.matches(".ai-box textarea")) {
-        ev.preventDefault();
-        const card = ev.target.closest(".ex");
-        askAi(card, currentList()[+card.dataset.idx]);
-        return;
-      }
       if (ev.key === "Enter" && ev.target.matches("input[data-f]")) {
         const card = ev.target.closest(".ex");
         onCheck(card, currentList()[+card.dataset.idx]);
@@ -556,55 +546,8 @@
     app.innerHTML = `<div class="page"><h1>Không tìm thấy trang</h1><p class="lead">Có thể đường dẫn đã cũ.</p><a class="btn" href="#/">Về danh sách bài học</a></div>`;
   }
 
-  /* ---------------- trợ lý AI ---------------- */
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const plain = (s) => String(s || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
-  const formatAi = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
-
-  function toggleAi(card) {
-    const slot = card.querySelector(".ai-slot");
-    if (slot.innerHTML) { slot.innerHTML = ""; return; }
-    slot.innerHTML = `<div class="ai-box">
-      <div class="ai-head">Hỏi trợ lý AI <b>${esc(session.ai.model)}</b></div>
-      <div class="ai-log"></div>
-      <div class="ai-ask"><textarea rows="2" maxlength="800" placeholder="Ví dụ: Vì sao phải đổi dấu khi chuyển vế?" aria-label="Câu hỏi cho AI"></textarea><button type="button" class="btn primary small" data-act="ai-send">Gửi</button></div>
-      <p class="ai-note">AI đôi khi nhầm. Hãy đối chiếu với lời giải của bài.</p>
-    </div>`;
-    slot.querySelector("textarea").focus();
-  }
-
-  async function askAi(card, e) {
-    const box = card.querySelector(".ai-box");
-    if (!box || !e) return;
-    const ta = box.querySelector("textarea");
-    const btn = box.querySelector('[data-act="ai-send"]');
-    const q = ta.value.trim();
-    if (!q || btn.disabled) return;
-    const log = box.querySelector(".ai-log");
-    log.insertAdjacentHTML("beforeend", `<div class="ai-msg me">${esc(q)}</div>`);
-    const reply = document.createElement("div");
-    reply.className = "ai-msg bot wait";
-    reply.textContent = "Đang suy nghĩ…";
-    log.appendChild(reply);
-    ta.value = "";
-    btn.disabled = true;
-    const exercise = plain(e.q) + (e.type === "choice" ? ` Các lựa chọn: ${e.choices.map((c, i) => `${LETTERS[i]}. ${plain(c)}`).join("; ")}` : "");
-    const answer = [...card.querySelectorAll("input[data-f]")].map((i) => i.value.trim()).filter(Boolean).join("; ");
-    try {
-      const d = await api("/api/ai", { method: "POST", body: { question: q, exercise, answer } });
-      reply.className = "ai-msg bot";
-      reply.innerHTML = formatAi(d.reply);
-      typeset(reply);
-    } catch (err) {
-      if (err.status === 401) return expireSession();
-      reply.className = "ai-msg bot err";
-      reply.textContent = err.message;
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
   /* ---------------- đăng nhập & phiên ---------------- */
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const lastWord = (name) => String(name || "").trim().split(/\s+/).pop() || "";
 
   function saveSession() {
@@ -693,7 +636,6 @@
 
   function start(d) {
     session.name = d.name;
-    session.ai = d.ai || session.ai;
     session.progress = d.progress || { ex: {} };
     store.data = { ex: { ...(session.progress.ex || {}) } };
     store.pending = {};
@@ -821,7 +763,6 @@
     const row = (demo, text) => `<li><div class="g-demo">${demo}</div><div class="g-txt">${text}</div></li>`;
     const pill = (t) => `<span class="demo-pill">${t}</span>`;
     const btn = (t, cls = "") => `<span class="btn small demo ${cls}">${t}</span>`;
-    const ai = session.ai.enabled;
     return `<div class="guide-in">
       <button type="button" class="guide-x" data-close aria-label="Đóng">×</button>
       <p class="kicker">${first ? `Chào ${esc(lastWord(session.name))}!` : "Hướng dẫn sử dụng"}</p>
@@ -829,7 +770,7 @@
 
       <section class="g-about">
         <p>Website được tạo bởi <b>Nguyễn Phú Quốc</b>, dành cho người mất gốc và học viên bổ túc muốn học lại Toán 7 tập một (bộ Kết nối tri thức). Mỗi bài được giảng lại bằng lời thường, chia nhỏ từng bước, kèm ví dụ mẫu và bài tập tự luyện có gợi ý, lời giải chi tiết. Bạn cứ học chậm, sai thì làm lại — không ai chấm điểm cả.</p>
-        <p class="g-ai">Website có tích hợp model AI <b>Goslynk N7</b> của <a href="https://goslynk.com" target="_blank" rel="noopener">Goslynk.com</a>${ai ? ": bí chỗ nào, bấm <b>Hỏi AI</b> ở bài tập đó để được giảng thêm theo cách khác." : ". Trợ lý AI hiện đang tạm tắt và sẽ sớm được mở lại."}</p>
+        <p class="g-ai">Website có tích hợp model AI <b>Goslynk N7</b> của <a href="https://goslynk.com" target="_blank" rel="noopener">Goslynk.com</a>.</p>
       </section>
 
       <h3>Trên thanh đầu trang</h3>
@@ -848,7 +789,6 @@
         ${row(`<span class="demo-choice"><span class="letter">A</span>Đáp án</span>`, "Câu trắc nghiệm: bấm thẳng vào đáp án. Chọn sai sẽ có lời nhắc vì sao sai, bạn chọn lại được.")}
         ${row(btn("Gợi ý", "ghost"), "Mách nước bước đầu tiên, chưa lộ đáp án. Nên bấm cái này trước khi xem lời giải.")}
         ${row(btn("Giải giúp tôi"), "Điền sẵn đáp án và hiện <b>lời giải từng bước</b>. Sai hai lần nút này sẽ nhún nhẹ để nhắc bạn.")}
-        ${ai ? row(btn("Hỏi AI", "ghost"), "Gõ câu hỏi về đúng bài tập đó, trợ lý Goslynk N7 sẽ giải thích thêm bằng tiếng Việt.") : ""}
         ${row(`<span class="demo-state ok">Đã giải đúng</span><span class="demo-state shown">Đã xem lời giải</span>`, "Trạng thái của từng bài tập. Bài “Đã xem lời giải” nên làm lại sau một, hai hôm.")}
         ${row(`${pill("← Bài trước")} ${pill("Bài tiếp theo →")}`, "Ở cuối trang, chuyển sang bài kế tiếp theo đúng thứ tự sách giáo khoa.")}
       </ul>
